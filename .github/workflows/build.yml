@@ -27,6 +27,8 @@ jobs:
               settings:
                 base:
                   PRODUCT_BUNDLE_IDENTIFIER: com.qack.duvan
+                  ASSETCATALOG_COMPILER_APPICON_NAME: ""
+                  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
           EOF
           xcodegen generate
 
