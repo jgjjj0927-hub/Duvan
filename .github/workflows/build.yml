@@ -1,0 +1,48 @@
+name: Build Unsigned IPA
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Xcode Project
+        run: |
+          brew install xcodegen
+          cat > project.yml << EOF
+          name: Duvan
+          options:
+            bundleIdPrefix: com.qack
+          targets:
+            Duvan:
+              type: application
+              platform: iOS
+              deploymentTarget: "15.0"
+              sources: 
+                - DuvanApp.swift
+                - ContentView.swift
+                - Assets.xcassets
+                - scream.mp3
+              settings:
+                base:
+                  PRODUCT_BUNDLE_IDENTIFIER: com.qack.duvan
+          EOF
+          xcodegen generate
+
+      - name: Build Archive (Unsigned)
+        run: |
+          xcodebuild -project Duvan.xcodeproj -scheme Duvan -sdk iphoneos -configuration Release -archivePath $RUNNER_TEMP/Duvan.xcarchive archive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+          mkdir -p $RUNNER_TEMP/Payload
+          cp -R $RUNNER_TEMP/Duvan.xcarchive/Products/Applications/Duvan.app $RUNNER_TEMP/Payload/
+          cd $RUNNER_TEMP
+          zip -r Duvan.ipa Payload
+
+      - name: Upload Unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Duvan-unsigned
+          path: $RUNNER_TEMP/Duvan.ipa
